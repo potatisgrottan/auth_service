@@ -1,6 +1,7 @@
 package com.example.auth_service.core;
 
 
+import com.example.auth_service.enums.HospitalRole;
 import com.example.auth_service.db.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -8,8 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -29,13 +28,13 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 
-    @Transactional
-    public User createUser(String email, String password, String role) {
+    /*@Transactional
+    public User createUser(String email, String password, HospitalRole role) {
         return createUser(email, password, null, role);
-    }
+    }*/
 
     @Transactional
-    public User createUser(String email, String password, String fullName, String role) {
+    public User register(String email, String password, String fullName, HospitalRole role) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("User already exists with email: " + email);
         }
@@ -62,6 +61,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    /*@Transactional(readOnly = true)
     public List<User> findAvailableUsers() {
         return userRepository.findAll();
     }
@@ -88,16 +88,16 @@ public class UserService implements UserDetailsService {
 
     public List<User> findUsersAvailableToMessage(User currentUser) {
         switch (currentUser.getRole()) {
-            case "PATIENT":
+            case HospitalRole.PATIENT:
                 return userRepository.findByRoleIn(List.of("DOCTOR", "NURSE"));
 
-            case "DOCTOR":
-            case "NURSE":
-                return userRepository.findByRole("PATIENT");
+            case HospitalRole.DOCTOR:
+            case HospitalRole.NURSE:
+                return userRepository.findByRole(HospitalRole.PATIENT);
 
             default:
                 return List.of();
         }
-    }
+    }*/
 
 }

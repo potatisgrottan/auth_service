@@ -1,23 +1,26 @@
 package com.example.auth_service.core;
 
 
+import com.example.auth_service.enums.HospitalRole;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.UUID;
+
 
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {
 
     @Id
-    @Column(columnDefinition = "uuid")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private UUID id;
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(columnDefinition = "CHAR(36)")
+    private String id;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -28,15 +31,16 @@ public class User implements UserDetails {
     @Column(name = "full_name")
     private String fullName;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role; //TODO enum
+    private HospitalRole role; //TODO enum
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public User() {}
 
-    public User(String email, String password, String fullName, String role) {
+    public User(String email, String password, String fullName, HospitalRole role) {
         this.email = email;
         this.password = password;
         this.fullName = fullName;
@@ -44,8 +48,8 @@ public class User implements UserDetails {
         this.createdAt = LocalDateTime.now();
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -56,8 +60,8 @@ public class User implements UserDetails {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public HospitalRole getRole() { return role; }
+    public void setRole(HospitalRole role) { this.role = role; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
