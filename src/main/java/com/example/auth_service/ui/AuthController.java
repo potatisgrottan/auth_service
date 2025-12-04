@@ -2,6 +2,7 @@ package com.example.auth_service.ui;
 
 import com.example.auth_service.core.User;
 import com.example.auth_service.core.UserService;
+import com.example.auth_service.enums.HospitalRole;
 import com.example.auth_service.ui.dto.LoginDTO;
 import com.example.auth_service.ui.dto.RegistrationDTO;
 import com.example.auth_service.ui.dto.UserDTO;
@@ -9,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -53,6 +56,23 @@ public class AuthController {
     public UserDTO login(@RequestBody LoginDTO dto) {
         User user = userService.authenticate(dto.email(), dto.password());
         return new UserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole());
+    }
+
+    @GetMapping("/users/role/{role}")
+    public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable String role) {
+        HospitalRole hospitalRole;
+        try {
+            hospitalRole = HospitalRole.valueOf(role.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<User> users = userService.findByRole(hospitalRole);
+        List<UserDTO> dtos = users.stream()
+                .map(u -> new UserDTO(u.getId(), u.getEmail(), u.getFullName(), u.getRole()))
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/validate")

@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class UserService implements UserDetailsService {
 
@@ -27,6 +29,12 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
+
+    @Transactional(readOnly = true)
+    public List<User> findByRole(HospitalRole role) {
+        return userRepository.findByRole(role);
+    }
+
 
     /*@Transactional
     public User createUser(String email, String password, HospitalRole role) {
