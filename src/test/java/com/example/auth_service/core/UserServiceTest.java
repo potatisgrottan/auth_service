@@ -28,18 +28,20 @@ class UserServiceTest {
 
     @Test
     void createUser_shouldEncodePassword() {
-        User user = new User();
-        user.setEmail("test@example.com");
-        user.setFullName("test");
-        user.setPassword("password");
-        user.setRole(HospitalRole.PATIENT);
-
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        User saved = userService.register(user.getEmail(), user.getPassword(), user.getFullName(),user.getRole());
+        User saved = userService.register(
+                "test@example.com",
+                "password",
+                "Test User",
+                "19900101-1234",
+                "Testgatan 10",
+                "0701112233",
+                HospitalRole.PATIENT
+        );
 
         assertNotNull(saved);
-        assertNotEquals("password", saved.getPassword()); // password should be encoded
+        assertNotEquals("password", saved.getPassword());  // Should be encoded
         assertTrue(passwordEncoder.matches("password", saved.getPassword()));
         verify(userRepository, times(1)).save(any(User.class));
     }
@@ -47,11 +49,20 @@ class UserServiceTest {
     @Test
     void authenticate_shouldReturnUser_whenPasswordMatches() {
         String rawPassword = "secret";
-        User user = new User("test@example.com", passwordEncoder.encode(rawPassword), "Test User", HospitalRole.PATIENT);
+        User user = new User(
+                "test@example.com",
+                passwordEncoder.encode(rawPassword),
+                "Test User",
+                "19900101-1234",
+                "Testgatan 10",
+                "0701112233",
+                HospitalRole.PATIENT
+        );
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
         User authUser = userService.authenticate("test@example.com", rawPassword);
+
         assertNotNull(authUser);
         assertEquals("test@example.com", authUser.getEmail());
     }
@@ -59,10 +70,19 @@ class UserServiceTest {
     @Test
     void authenticate_shouldThrow_whenPasswordDoesNotMatch() {
         String rawPassword = "secret";
-        User user = new User("test@example.com", passwordEncoder.encode(rawPassword), "Test User", HospitalRole.PATIENT);
+        User user = new User(
+                "test@example.com",
+                passwordEncoder.encode(rawPassword),
+                "Test User",
+                "19900101-1234",
+                "Testgatan 10",
+                "0701112233",
+                HospitalRole.PATIENT
+        );
 
         when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
-        assertThrows(RuntimeException.class, () -> userService.authenticate("test@example.com", "wrong"));
+        assertThrows(RuntimeException.class,
+                () -> userService.authenticate("test@example.com", "wrong"));
     }
 }

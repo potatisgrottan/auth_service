@@ -42,7 +42,14 @@ public class UserService implements UserDetailsService {
     }*/
 
     @Transactional
-    public User register(String email, String password, String fullName, HospitalRole role) {
+    public User register(String email,
+                         String password,
+                         String fullName,
+                         String personalNumber,
+                         String address,
+                         String phoneNumber,
+                         HospitalRole role)
+    {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("User already exists with email: " + email);
         }
@@ -51,6 +58,9 @@ public class UserService implements UserDetailsService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setFullName(fullName);
+        user.setPersonalNumber(personalNumber);
+        user.setAddress(address);
+        user.setPhoneNumber(phoneNumber);
         user.setRole(role);
 
         return userRepository.save(user);

@@ -31,6 +31,15 @@ public class User implements UserDetails {
     @Column(name = "full_name")
     private String fullName;
 
+    @Column(name = "personal_number")
+    private String personalNumber;
+
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private HospitalRole role; //TODO enum
@@ -46,6 +55,9 @@ public class User implements UserDetails {
         this.fullName = fullName;
         this.role = role;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public User(String mail, String secret, String testUser, String s, String s1, String number, HospitalRole hospitalRole) {
     }
 
     public String getId() { return id; }
@@ -65,6 +77,28 @@ public class User implements UserDetails {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
+    public void setPersonalNumber(String personalNumber) {
+        this.personalNumber = personalNumber;
+    }
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

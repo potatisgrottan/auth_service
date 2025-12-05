@@ -4,6 +4,7 @@ import com.example.auth_service.core.User;
 import com.example.auth_service.core.UserService;
 import com.example.auth_service.enums.HospitalRole;
 import com.example.auth_service.ui.dto.LoginDTO;
+import com.example.auth_service.ui.dto.PatientDTO;
 import com.example.auth_service.ui.dto.RegistrationDTO;
 import com.example.auth_service.ui.dto.UserDTO;
 import org.springframework.http.ResponseEntity;
@@ -38,28 +39,36 @@ public class AuthController {
         String password = parts[1];
 
         User user = userService.authenticate(email, password);
-        return new UserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole());
+        return new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
+                user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole());
     }
 
     @PostMapping("/register")
     public UserDTO register(@RequestBody RegistrationDTO dto) {
-        User user = userService.register(
+        userService.register(
                 dto.email(),
                 dto.password(),
                 dto.fullName(),
+                dto.personalNumber(),
+                dto.address(),
+                dto.phoneNumber(),
                 dto.role()
         );
-        return new UserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole());
+
+
+        return new UserDTO(dto.email(), dto.password(),
+                dto.fullName(), dto.personalNumber(), dto.address(), dto.phoneNumber(), dto.role());
     }
 
     @PostMapping("/login")
     public UserDTO login(@RequestBody LoginDTO dto) {
         User user = userService.authenticate(dto.email(), dto.password());
-        return new UserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole());
+        return new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
+                user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole());
     }
 
     @GetMapping("/users/role/{role}")
-    public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable String role) {
+    public ResponseEntity<List<PatientDTO>> getUsersByRole(@PathVariable String role) {
         HospitalRole hospitalRole;
         try {
             hospitalRole = HospitalRole.valueOf(role.toUpperCase());
@@ -68,12 +77,21 @@ public class AuthController {
         }
 
         List<User> users = userService.findByRole(hospitalRole);
-        List<UserDTO> dtos = users.stream()
-                .map(u -> new UserDTO(u.getId(), u.getEmail(), u.getFullName(), u.getRole()))
+        List<PatientDTO> dtos = users.stream()
+                .map(u -> new PatientDTO(
+                        u.getId(),
+                        u.getEmail(),
+                        u.getFullName(),
+                        u.getRole(),
+                        u.getPersonalNumber(),
+                        u.getAddress(),
+                        u.getPhoneNumber()
+                ))
                 .toList();
 
         return ResponseEntity.ok(dtos);
     }
+
 
     @GetMapping("/validate")
     public ResponseEntity<?> validateUser(@RequestHeader("Authorization") String authHeader) {
@@ -100,7 +118,8 @@ public class AuthController {
 
         try {
             User user = userService.authenticate(email, password);
-            return ResponseEntity.ok(new UserDTO(user.getId(), user.getEmail(), user.getFullName(), user.getRole()));
+            return ResponseEntity.ok(new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
+                    user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole()));
         } catch (Exception e) {
             System.out.println("AuthService: Authentication failed = " + e.getMessage());
             return ResponseEntity.status(401).build();
