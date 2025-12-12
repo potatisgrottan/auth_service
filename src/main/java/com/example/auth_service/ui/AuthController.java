@@ -1,5 +1,5 @@
 package com.example.auth_service.ui;
-
+/*
 import com.example.auth_service.core.User;
 import com.example.auth_service.core.UserService;
 import com.example.auth_service.enums.HospitalRole;
@@ -127,5 +127,5 @@ public class AuthController {
     }
 
 
-}
+}*/
 

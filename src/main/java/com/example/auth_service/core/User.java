@@ -3,6 +3,11 @@ package com.example.auth_service.core;
 
 import com.example.auth_service.enums.HospitalRole;
 import jakarta.persistence.*;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,8 +18,12 @@ import java.util.Collections;
 
 
 @Entity
+@Data // Skapar getters, setters, toString, equals, hashcode
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(generator = "uuid2")
@@ -25,8 +34,8 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String password;
+   /* @Column(name = "password_hash", nullable = false)
+    private String password;*/
 
     @Column(name = "full_name")
     private String fullName;
@@ -42,83 +51,10 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private HospitalRole role; //TODO enum
+    private HospitalRole role;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public User() {}
 
-    public User(String email, String password, String fullName, HospitalRole role) {
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.role = role;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    public User(String mail, String secret, String testUser, String s, String s1, String number, HospitalRole hospitalRole) {
-    }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public HospitalRole getRole() { return role; }
-    public void setRole(HospitalRole role) { this.role = role; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public String getPersonalNumber() {
-        return personalNumber;
-    }
-    public void setPersonalNumber(String personalNumber) {
-        this.personalNumber = personalNumber;
-    }
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return true; }
 }

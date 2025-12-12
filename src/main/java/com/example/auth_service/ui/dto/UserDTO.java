@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record UserDTO(
                       String email,
-                      String password,
+                     // String password,
                       String fullName,
                       String personalNumber,
                       String address,

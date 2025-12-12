@@ -3,6 +3,7 @@ package com.example.auth_service.core;
 
 import com.example.auth_service.enums.HospitalRole;
 import com.example.auth_service.db.UserRepository;
+import com.example.auth_service.ui.dto.UserDTO;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,24 +12,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService  {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+   // private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        //this.passwordEncoder = passwordEncoder;
     }
 
-    @Override
+   /* @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-    }
+    }*/
 
     @Transactional(readOnly = true)
     public List<User> findByRole(HospitalRole role) {
@@ -42,8 +44,12 @@ public class UserService implements UserDetailsService {
     }*/
 
     @Transactional
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Transactional
     public User register(String email,
-                         String password,
                          String fullName,
                          String personalNumber,
                          String address,
@@ -56,7 +62,7 @@ public class UserService implements UserDetailsService {
 
         User user = new User();
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
+        //user.setPassword(passwordEncoder.encode(password));
         user.setFullName(fullName);
         user.setPersonalNumber(personalNumber);
         user.setAddress(address);
@@ -66,7 +72,7 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
+   /* @Transactional(readOnly = true)
     public User authenticate(String email, String rawPassword) {
 
         User user = userRepository.findByEmail(email)
