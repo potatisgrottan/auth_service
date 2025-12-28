@@ -4,19 +4,14 @@ package com.example.auth_service.ui;
 import com.example.auth_service.core.User;
 import com.example.auth_service.core.UserService;
 import com.example.auth_service.enums.HospitalRole;
-import com.example.auth_service.ui.dto.LoginDTO;
 import com.example.auth_service.ui.dto.PatientDTO;
 import com.example.auth_service.ui.dto.RegistrationDTO;
 import com.example.auth_service.ui.dto.UserDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,18 +26,14 @@ public class UserController {
 
     @GetMapping("/me")
     public UserDTO getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
-        // 1. Hämta email direkt från Keycloak-token (claims)
-        // "email" eller "preferred_username" beroende på din Keycloak-config
+
         String email = jwt.getClaimAsString("email");
 
-        // 2. Hämta resten av profil-datan från din databas
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User profile not found for: " + email));
 
-        // 3. Returnera DTO (Utan lösenord!)
         return new UserDTO(
                 user.getEmail(),
-                null, // Inget lösenord ska skickas tillbaka
                 user.getFullName(),
                 user.getPersonalNumber(),
                 user.getAddress(),
