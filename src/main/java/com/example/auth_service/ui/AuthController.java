@@ -1,19 +1,19 @@
 package com.example.auth_service.ui;
-/*
+
+
 import com.example.auth_service.core.User;
 import com.example.auth_service.core.UserService;
 import com.example.auth_service.enums.HospitalRole;
-import com.example.auth_service.ui.dto.LoginDTO;
 import com.example.auth_service.ui.dto.PatientDTO;
 import com.example.auth_service.ui.dto.RegistrationDTO;
 import com.example.auth_service.ui.dto.UserDTO;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,45 +26,83 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public UserDTO getCurrentUser(@RequestHeader("Authorization") String authHeader) { if (!authHeader.startsWith("Basic ")) {
-        throw new RuntimeException("Invalid auth header");
+    public UserDTO getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        // 1. Hämta grundinfo från Token
+        String email = jwt.getClaimAsString("email");
+        String name = jwt.getClaimAsString("name"); // "name" är oftast fullständigt namn i Keycloak
+        if (name == null) name = jwt.getClaimAsString("preferred_username");
+
+        // 2. Avgör vilken roll användaren har baserat på Keycloak-token
+        HospitalRole tokenRole = determineRoleFromToken(jwt);
+
+        // 3. JIT Provisioning & Synkronisering
+        // Vi måste använda finalvariabler inuti lambdas/streams
+        String finalName = name;
+        HospitalRole finalRole = tokenRole;
+
+        User user = userService.findByEmail(email)
+                .map(existingUser -> {
+                    // SCENARIO: Användaren finns redan.
+                    // Har rollen ändrats i Keycloak sen sist? Då uppdaterar vi databasen!
+                    if (existingUser.getRole() != finalRole) {
+                        System.out.println("Syncing role for " + email + ": " + existingUser.getRole() + " -> " + finalRole);
+                        existingUser.setRole(finalRole);
+                        return userService.saveUser(existingUser); // OBS: Se till att denna metod finns i UserService
+                    }
+                    return existingUser;
+                })
+                .orElseGet(() -> {
+                    // SCENARIO: Användaren finns INTE (första inloggningen).
+                    System.out.println("Creating new JIT user from Keycloak: " + email + " with role " + finalRole);
+                    return userService.register(
+                            email,
+                            finalName != null ? finalName : "Unknown Name",
+                            "Ej angivet", // Personnummer finns ej i token
+                            "Ej angivet", // Adress finns ej i token
+                            "Ej angivet", // Telefonnummer finns ej i token
+                            finalRole
+                    );
+                });
+
+        return new UserDTO(
+                user.getEmail(),
+                user.getFullName(),
+                user.getPersonalNumber(),
+                user.getAddress(),
+                user.getPhoneNumber(),
+                user.getRole()
+        );
     }
 
-        String base64 = authHeader.substring(6);
-        String decoded = new String(java.util.Base64.getDecoder().decode(base64));
-        String[] parts = decoded.split(":");
-        if (parts.length != 2) throw new RuntimeException("Invalid credentials format");
+    // Hjälpmetod för att extrahera roller
+    private HospitalRole determineRoleFromToken(Jwt jwt) {
+        Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
+        if (realmAccess != null && realmAccess.containsKey("roles")) {
+            List<String> roles = (List<String>) realmAccess.get("roles");
 
-        String email = parts[0];
-        String password = parts[1];
+            // Gör om alla till uppercase för säkerhets skull
+            List<String> upperRoles = roles.stream().map(String::toUpperCase).toList();
 
-        User user = userService.authenticate(email, password);
-        return new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
-                user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole());
+            if (upperRoles.contains("DOCTOR")) return HospitalRole.DOCTOR;
+            if (upperRoles.contains("NURSE")) return HospitalRole.NURSE;
+        }
+        // Default om ingen specifik roll hittas (t.ex. för vanliga användare)
+        return HospitalRole.PATIENT;
     }
+
+    // --- Övriga endpoints (Register behövs inte längre för frontend, men kan vara kvar för interna test) ---
 
     @PostMapping("/register")
     public UserDTO register(@RequestBody RegistrationDTO dto) {
-        userService.register(
+        User user = userService.register(
                 dto.email(),
-                dto.password(),
                 dto.fullName(),
                 dto.personalNumber(),
                 dto.address(),
                 dto.phoneNumber(),
                 dto.role()
         );
-
-
-        return new UserDTO(dto.email(), dto.password(),
-                dto.fullName(), dto.personalNumber(), dto.address(), dto.phoneNumber(), dto.role());
-    }
-
-    @PostMapping("/login")
-    public UserDTO login(@RequestBody LoginDTO dto) {
-        User user = userService.authenticate(dto.email(), dto.password());
-        return new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
-                user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole());
+        return new UserDTO(user.getEmail(), user.getFullName(), user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber(), user.getRole());
     }
 
     @GetMapping("/users/role/{role}")
@@ -91,41 +129,4 @@ public class AuthController {
 
         return ResponseEntity.ok(dtos);
     }
-
-
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateUser(@RequestHeader("Authorization") String authHeader) {
-        System.out.println("AuthService: Received Authorization header = " + authHeader);
-
-        if (!authHeader.startsWith("Basic ")) {
-            System.out.println("AuthService: Invalid header format");
-            return ResponseEntity.status(401).build();
-        }
-
-        String base64 = authHeader.substring(6);
-        String decoded = new String(java.util.Base64.getDecoder().decode(base64));
-        System.out.println("AuthService: Decoded = " + decoded);
-
-        String[] parts = decoded.split(":");
-        if (parts.length != 2) {
-            System.out.println("AuthService: Invalid credentials format");
-            return ResponseEntity.status(401).build();
-        }
-
-        String email = parts[0];
-        String password = parts[1];
-        System.out.println("AuthService: Authenticating email = " + email);
-
-        try {
-            User user = userService.authenticate(email, password);
-            return ResponseEntity.ok(new UserDTO(user.getEmail(), user.getPassword(),user.getFullName(),
-                    user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber() ,user.getRole()));
-        } catch (Exception e) {
-            System.out.println("AuthService: Authentication failed = " + e.getMessage());
-            return ResponseEntity.status(401).build();
-        }
-    }
-
-
-}*/
-
+}
