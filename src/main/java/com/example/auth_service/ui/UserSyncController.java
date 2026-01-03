@@ -10,22 +10,32 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/auth") // Eller var du vill ha den
+@RequestMapping("/api/auth")
 public class UserSyncController {
 
     @Autowired
     private UserRepository userRepository;
 
+    private final Random random = new Random();
+    private final List<String> fakeAddresses = Arrays.asList(
+            "Storgatan 12, Södertälje",
+            "Drottninggatan 5, Stockholm",
+            "Kungsgatan 8, Göteborg",
+            "Långholmsgatan 3, Södermalm",
+            "Sveavägen 20, Stockholm"
+    );
+
     @PostMapping("/sync")
     public void syncUser(@AuthenticationPrincipal Jwt principal) {
-        // Hämta data från Keycloak-token
+
+
         String email = principal.getClaimAsString("email");
         String name = principal.getClaimAsString("name");
+
+
 
         // Hämta rollen
         HospitalRole role = HospitalRole.PATIENT; // Default
@@ -48,10 +58,22 @@ public class UserSyncController {
                 System.out.println("Uppdaterade användare i AuthDB: " + email);
             }
         } else {
-            // Skapa ny om den saknas
+
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setFullName(name != null ? name : email);
+
+            int lastFour = 1000+random.nextInt(9000);
+            String phoneNumber= "070206" + lastFour;
+            String personalNumber="030922" + lastFour;
+
+            String randAddress = fakeAddresses.get(random.nextInt(fakeAddresses.size()));
+
+            newUser.setPassword("KEYCLOAK_MANAGED");
+            newUser.setPersonalNumber(personalNumber);
+            newUser.setAddress(randAddress);
+            newUser.setPhoneNumber(phoneNumber);
+
 
             newUser.setRole(role);
             userRepository.save(newUser);

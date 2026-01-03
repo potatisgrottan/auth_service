@@ -34,8 +34,8 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-   /* @Column(name = "password_hash", nullable = false)
-    private String password;*/
+    @Column(name = "password_hash", nullable = false)
+    private String password;
 
     @Column(name = "full_name")
     private String fullName;
