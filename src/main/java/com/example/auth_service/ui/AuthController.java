@@ -29,7 +29,7 @@ public class AuthController {
     public UserDTO getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
         // 1. Hämta grundinfo från Token
         String email = jwt.getClaimAsString("email");
-        String name = jwt.getClaimAsString("name"); // "name" är oftast fullständigt namn i Keycloak
+        String name = jwt.getClaimAsString("name");
         if (name == null) name = jwt.getClaimAsString("preferred_username");
 
         // 2. Avgör vilken roll användaren har baserat på Keycloak-token
@@ -58,6 +58,7 @@ public class AuthController {
                             email,
                             finalName != null ? finalName : "Unknown Name",
                             "Ej angivet", // Personnummer finns ej i token
+                            "Keycloak_manage",
                             "Ej angivet", // Adress finns ej i token
                             "Ej angivet", // Telefonnummer finns ej i token
                             finalRole
@@ -67,6 +68,7 @@ public class AuthController {
         return new UserDTO(
                 user.getEmail(),
                 user.getFullName(),
+                user.getPassword(),
                 user.getPersonalNumber(),
                 user.getAddress(),
                 user.getPhoneNumber(),
@@ -97,12 +99,13 @@ public class AuthController {
         User user = userService.register(
                 dto.email(),
                 dto.fullName(),
+                dto.password(),
                 dto.personalNumber(),
                 dto.address(),
                 dto.phoneNumber(),
                 dto.role()
         );
-        return new UserDTO(user.getEmail(), user.getFullName(), user.getPersonalNumber(), user.getAddress(), user.getPhoneNumber(), user.getRole());
+        return new UserDTO(user.getEmail(), user.getFullName(), user.getPersonalNumber(),user.getPassword(), user.getAddress(), user.getPhoneNumber(), user.getRole());
     }
 
     @GetMapping("/users/role/{role}")

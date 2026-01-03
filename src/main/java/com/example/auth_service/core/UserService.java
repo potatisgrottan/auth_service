@@ -51,6 +51,7 @@ public class UserService  {
     @Transactional
     public User register(String email,
                          String fullName,
+                         String password,
                          String personalNumber,
                          String address,
                          String phoneNumber,
