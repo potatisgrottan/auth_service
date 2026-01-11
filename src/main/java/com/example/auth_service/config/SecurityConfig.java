@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/auth/sync").authenticated()
 
                         .requestMatchers("/api/auth/users/role/**").hasAnyRole("DOCTOR", "NURSE", "PATIENT") // Eller authenticated()
